@@ -23,6 +23,11 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 import java.io.IOException;
 
+/***
+ * This is a Hello world class file, basically...
+ * @author aironman
+ *
+ */
 public class IrisClassifier {
 
     private static final int CLASSES_COUNT = 3;
