@@ -15,6 +15,11 @@
 			<version>${ant-compress.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>gov.nasa.gsfc.heasarc</groupId>
+			<artifactId>nom-tam-fits</artifactId>
+			<version>${nom-tam-fits.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>org.nd4j</groupId>
 			<artifactId>nd4j-native-platform</artifactId>
 			<version>${dl4j.version}</version>
@@ -35,6 +40,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<dl4j.version>0.9.1</dl4j.version>
 		<ant-compress.version>1.5</ant-compress.version>
+		<nom-tam-fits.version>1.15.2</nom-tam-fits.version>
 	</properties>
 
 </project>
