@@ -2,8 +2,12 @@ package com.aironman.deeplearning4j;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.Random;
+import java.util.zip.Adler32;
 
+import org.apache.ant.compress.taskdefs.Unzip;
+import org.apache.commons.io.FileUtils;
 import org.datavec.api.io.filters.BalancedPathFilter;
 import org.datavec.api.io.labels.ParentPathLabelGenerator;
 import org.datavec.api.split.FileSplit;
@@ -52,8 +56,8 @@ public class TrainImageNetVG16 {
     public static final String TEST_FOLDER = DATA_PATH + "/test_both";
     private static final String SAVING_PATH = DATA_PATH + "/saved/modelIteration_";
     private static final String FREEZE_UNTIL_LAYER = "fc2";
-    
-    private static final String DATA_URL = "https://dl.dropboxusercontent.com/s/tqnp49apphpzb40/dataTraining.zip?dl=0";
+    // path to dataTraining file
+    private static final String DATA_URL = "https://www.dropbox.com/s/g6zt79z9zcs2qeu/wetransfer-39ab61.zip?dl=0";
 
     public static void main(String[] args) throws IOException {
     	ZooModel zooModel = new VGG16();
@@ -63,7 +67,7 @@ public class TrainImageNetVG16 {
 
         LOGGER.info("Start Downloading Data...");
 
-        // downloadAndUnzipDataForTheFirstTime();
+        downloadAndUnzipDataForTheFirstTime();
         LOGGER.info("Data unzipped");
         // Define the File Paths
         File trainData = new File(TRAIN_FOLDER);
@@ -117,6 +121,28 @@ public class TrainImageNetVG16 {
             evalOn(vgg16Transfer, testIterator, iEpoch);
         }
 	}
+    
+    public static void unzip(File fileZip) throws IOException {
+
+        Unzip unzipper = new Unzip();
+        unzipper.setSrc(fileZip);
+        unzipper.setDest(new File(DATA_PATH));
+        unzipper.execute();
+    }
+    
+    private static void downloadAndUnzipDataForTheFirstTime() throws IOException {
+    	File data = new File(DATA_PATH + "/data.zip");
+    	
+        if (!data.exists()||FileUtils.checksum(data, new Adler32()).getValue()!=1195241806) {
+            data.delete();
+            FileUtils.copyURLToFile(new URL(DATA_URL), data);
+            LOGGER.info("File downloaded");
+        }
+        if (!new File(TRAIN_FOLDER).exists()) {
+            LOGGER.info("Unzipping Data...");
+            unzip(data);
+        }
+    }
     
     public static void evalOn(ComputationGraph vgg16Transfer, DataSetIterator testIterator, int iEpoch) throws IOException {
         LOGGER.info("Evaluate model at iteration " + iEpoch + " ....");
