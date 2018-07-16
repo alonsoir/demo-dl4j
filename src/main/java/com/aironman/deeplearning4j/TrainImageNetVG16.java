@@ -57,7 +57,7 @@ public class TrainImageNetVG16 {
     private static final String SAVING_PATH = DATA_PATH + "/saved/modelIteration_";
     private static final String FREEZE_UNTIL_LAYER = "fc2";
     // path to dataTraining file
-    private static final String DATA_URL = "https://www.dropbox.com/s/g6zt79z9zcs2qeu/wetransfer-39ab61.zip?dl=0";
+    private static final String DATA_URL = "https://www.dropbox.com/preview/Public/wetransfer-39ab61.zip";
 
     public static void main(String[] args) throws IOException {
     	ZooModel zooModel = new VGG16();
