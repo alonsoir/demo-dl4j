@@ -25,61 +25,65 @@ import java.io.IOException;
 
 /***
  * This is a Hello world class file, basically...
+ * 
  * @author aironman
  *
  */
 public class IrisClassifier {
 
-    private static final int CLASSES_COUNT = 3;
-    private static final int FEATURES_COUNT = 4;
+	private static final int CLASSES_COUNT = 3;
+	private static final int FEATURES_COUNT = 4;
 
-    public static void main(String[] args) throws IOException, InterruptedException {
+	public static void main(String[] args) throws IOException, InterruptedException {
 
-        DataSet allData;
-        try (RecordReader recordReader = new CSVRecordReader(0, ',')) {
+		DataSet allData = null;
+        try {
+        	RecordReader recordReader = new CSVRecordReader(0, ',') ;
             recordReader.initialize(new FileSplit(new ClassPathResource("iris.txt").getFile()));
-
             DataSetIterator iterator = new RecordReaderDataSetIterator(recordReader, 150, FEATURES_COUNT, CLASSES_COUNT);
             allData = iterator.next();
+            allData.shuffle(42);
+
+            DataNormalization normalizer = new NormalizerStandardize();
+            normalizer.fit(allData);
+            normalizer.transform(allData);
+
+            SplitTestAndTrain testAndTrain = allData.splitTestAndTrain(0.65);
+            DataSet trainingData = testAndTrain.getTrain();
+            DataSet testData = testAndTrain.getTest();
+
+            MultiLayerConfiguration configuration = new NeuralNetConfiguration.Builder()
+                    .iterations(1000)
+                    .activation(Activation.TANH)
+                    .weightInit(WeightInit.XAVIER)
+                    .learningRate(0.1)
+                    .regularization(true).l2(0.0001)
+                    .list()
+                    .layer(0, new DenseLayer.Builder().nIn(FEATURES_COUNT).nOut(3)
+                            .build())
+                    .layer(1, new DenseLayer.Builder().nIn(3).nOut(3)
+                            .build())
+                    .layer(2, new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
+                            .activation(Activation.SOFTMAX)
+                            .nIn(3).nOut(CLASSES_COUNT).build())
+                    .backprop(true).pretrain(false)
+                    .build();
+
+            MultiLayerNetwork model = new MultiLayerNetwork(configuration);
+            model.init();
+            model.fit(trainingData);
+
+            INDArray output = model.output(testData.getFeatureMatrix());
+
+            Evaluation eval = new Evaluation(CLASSES_COUNT);
+            eval.eval(testData.getLabels(), output);
+            System.out.println(eval.stats());
+        }catch(IOException ex) {
+        	throw ex;
+        }catch(InterruptedException ex1) {
+        	throw ex1;
         }
-
-        allData.shuffle(42);
-
-        DataNormalization normalizer = new NormalizerStandardize();
-        normalizer.fit(allData);
-        normalizer.transform(allData);
-
-        SplitTestAndTrain testAndTrain = allData.splitTestAndTrain(0.65);
-        DataSet trainingData = testAndTrain.getTrain();
-        DataSet testData = testAndTrain.getTest();
-
-        MultiLayerConfiguration configuration = new NeuralNetConfiguration.Builder()
-                .iterations(1000)
-                .activation(Activation.TANH)
-                .weightInit(WeightInit.XAVIER)
-                .learningRate(0.1)
-                .regularization(true).l2(0.0001)
-                .list()
-                .layer(0, new DenseLayer.Builder().nIn(FEATURES_COUNT).nOut(3)
-                        .build())
-                .layer(1, new DenseLayer.Builder().nIn(3).nOut(3)
-                        .build())
-                .layer(2, new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
-                        .activation(Activation.SOFTMAX)
-                        .nIn(3).nOut(CLASSES_COUNT).build())
-                .backprop(true).pretrain(false)
-                .build();
-
-        MultiLayerNetwork model = new MultiLayerNetwork(configuration);
-        model.init();
-        model.fit(trainingData);
-
-        INDArray output = model.output(testData.getFeatureMatrix());
-
-        Evaluation eval = new Evaluation(CLASSES_COUNT);
-        eval.eval(testData.getLabels(), output);
-        System.out.println(eval.stats());
-
+        System.out.println("DONE!");
     }
 
 }
