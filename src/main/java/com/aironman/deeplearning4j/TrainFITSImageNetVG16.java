@@ -13,10 +13,19 @@ import java.util.stream.Collectors;
 import org.datavec.api.io.filters.BalancedPathFilter;
 import org.datavec.api.io.labels.ParentPathLabelGenerator;
 import org.datavec.image.loader.BaseImageLoader;
+import org.deeplearning4j.nn.api.OptimizationAlgorithm;
+import org.deeplearning4j.nn.conf.Updater;
+import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.graph.ComputationGraph;
+import org.deeplearning4j.nn.transferlearning.FineTuneConfiguration;
+import org.deeplearning4j.nn.transferlearning.TransferLearning;
+import org.deeplearning4j.nn.weights.WeightInit;
+import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
 import org.deeplearning4j.zoo.PretrainedType;
 import org.deeplearning4j.zoo.ZooModel;
 import org.deeplearning4j.zoo.model.VGG16;
+import org.nd4j.linalg.activations.Activation;
+import org.nd4j.linalg.lossfunctions.LossFunctions;
 import org.slf4j.Logger;
 
 import nom.tam.fits.Fits;
@@ -54,59 +63,70 @@ public class TrainFITSImageNetVG16 {
 	private static final String LOCAL_EXPANDED_DATA_PATH = DATA_PATH + "/wetransfer-39ab61";
 
 	public static void main(String[] args) throws IOException {
-		/*
-		 * ZooModel zooModel = new VGG16();
-		 * LOGGER.debug("Start Downloading VGG16 model..."); ComputationGraph
-		 * preTrainedNet = (ComputationGraph)
-		 * zooModel.initPretrained(PretrainedType.IMAGENET);
-		 * LOGGER.debug(preTrainedNet.summary());
-		 * 
-		 * LOGGER.debug("Start Downloading Data..."); useUnzippedLocalFile();
-		 * LOGGER.debug("Data unzipped"); // Define the File Paths File trainData = new
-		 * File(TRAIN_FOLDER); File testData = new File(TEST_FOLDER);
-		 */
-		readFitFile();
+
+		ZooModel zooModel = new VGG16();
+		LOGGER.debug("Start Downloading VGG16 model...");
+		ComputationGraph preTrainedNet = (ComputationGraph) zooModel.initPretrained(PretrainedType.IMAGENET);
+		LOGGER.debug(preTrainedNet.summary());
+
+		readFitFiles();
+		
+		FineTuneConfiguration fineTuneConf = new FineTuneConfiguration.Builder().learningRate(5e-5)
+				.optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT).updater(Updater.NESTEROVS)
+				.seed(seed).build();
+
+		ComputationGraph vgg16Transfer = new TransferLearning.GraphBuilder(preTrainedNet)
+				.fineTuneConfiguration(fineTuneConf).setFeatureExtractor(FREEZE_UNTIL_LAYER)
+				.removeVertexKeepConnections("predictions")
+				.addLayer("predictions",
+						new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD).nIn(4096)
+								.nOut(NUM_POSSIBLE_LABELS).weightInit(WeightInit.XAVIER).activation(Activation.SOFTMAX)
+								.build(),
+						FREEZE_UNTIL_LAYER)
+				.build();
+		vgg16Transfer.setListeners(new ScoreIterationListener(5));
+		LOGGER.info(vgg16Transfer.summary());
+		LOGGER.info("DONE!");
 	}
 
-	private static void readFitFile() {
+	private static void readFitFiles() {
 
 		try {
-			List<File> filesdebuglder = Files.walk(Paths.get(LOCAL_EXPANDED_DATA_PATH))
-											 .filter(Files::isRegularFile)
-											 // .filter(line -> line.getName(0).toString().contains(".FIT"))
-											 .map(Path::toFile)
-											 .collect(Collectors.toList());
-			System.out.println("There are " + filesdebuglder.size() + " .FIT files in folder " + LOCAL_EXPANDED_DATA_PATH);
+			List<File> filesdebuglder = Files.walk(Paths.get(LOCAL_EXPANDED_DATA_PATH)).filter(Files::isRegularFile)
+					// .filter(line -> line.getName(0).toString().contains(".FIT"))
+					.map(Path::toFile).collect(Collectors.toList());
+			System.out.println(
+					"There are " + filesdebuglder.size() + " .FIT files in folder " + LOCAL_EXPANDED_DATA_PATH);
 			int count = 1;
 			for (File afile : filesdebuglder) {
 				System.out.println("Doing something cool with file " + afile.getName() + " ...");
 				Fits fitsFile = new Fits(afile);
 				ImageHDU imageHDU = (ImageHDU) fitsFile.readHDU();
 				StandardImageTiler tiler = imageHDU.getTiler();
-				short[][] tmp = (short[][] ) tiler.getCompleteImage();
-				System.out.println("tmp is " + tmp);
+				short[][] tmp = (short[][]) tiler.getCompleteImage();
+				System.out.println("tmp.length: " + tmp.length);
 				short imgData = tmp[0][0];
-				System.out.println("imgData is " + imgData );
-				count ++;
+				System.out.println("imgData is " + imgData);
+				int[] corners = new int[] { 0, 0 };
+				int[] lengths = new int[] { 100, 100 };
+				// what the fuck this method returns Object????
+				short[] center = (short[]) tiler.getTile(corners, lengths);
+				System.out.println("center is " + center[0] + " center.length: " + center.length);
+				count++;
 				System.out.println("Done with the file " + afile.getName() + " ... " + count);
 				fitsFile.close();
-				
+
 				/*
-				f = new Fits(afile);
-				ImageHDU hdu = (ImageHDU) f.getHDU(0);
-				int[][] image = (int[][]) hdu.getKernel();
-				System.out.println(image.length);
-				ImageData imageData = (ImageData) hdu.getData();
-				int[][] _imageData = (int[][]) imageData.getData();
-				System.out.println();
-				ImageTiler anotherTiler = hdu.getTiler();
-				int[] corners = new int[] { 950, 950 };
-				int[] lengths = new int[] { 100, 100 };
-				// short[] center = (short[]) tiler.getTile({950, 950}, {100, 100});
-				short[] center = (short[]) anotherTiler.getTile(corners, lengths);
-				System.out.println();
-				*/
-				
+				 * f = new Fits(afile); ImageHDU hdu = (ImageHDU) f.getHDU(0); int[][] image =
+				 * (int[][]) hdu.getKernel(); System.out.println(image.length); ImageData
+				 * imageData = (ImageData) hdu.getData(); int[][] _imageData = (int[][])
+				 * imageData.getData(); System.out.println(); ImageTiler anotherTiler =
+				 * hdu.getTiler(); int[] corners = new int[] { 950, 950 }; int[] lengths = new
+				 * int[] { 100, 100 }; // short[] center = (short[]) tiler.getTile({950, 950},
+				 * {100, 100}); short[] center = (short[]) anotherTiler.getTile(corners,
+				 * lengths); System.out.println();
+				 */
+
 				/*
 				 * Reading only parts of an Image
 				 * 
@@ -129,10 +149,10 @@ public class TrainFITSImageNetVG16 {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch(ClassCastException e) {
+		} catch (ClassCastException e) {
 			e.printStackTrace();
 		}
-
+		System.out.println("DONE!");
 	}
 
 	private static void useUnzippedLocalFile() {
