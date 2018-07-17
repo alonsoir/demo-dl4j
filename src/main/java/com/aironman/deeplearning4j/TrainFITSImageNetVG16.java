@@ -77,16 +77,19 @@ public class TrainFITSImageNetVG16 {
 											 .map(Path::toFile)
 											 .collect(Collectors.toList());
 			System.out.println("There are " + filesdebuglder.size() + " .FIT files in folder " + LOCAL_EXPANDED_DATA_PATH);
-
+			int count = 1;
 			for (File afile : filesdebuglder) {
 				System.out.println("Doing something cool with file " + afile.getName() + " ...");
 				Fits fitsFile = new Fits(afile);
 				ImageHDU imageHDU = (ImageHDU) fitsFile.readHDU();
 				StandardImageTiler tiler = imageHDU.getTiler();
-				float[][][][] tmp = (float[][][][]) tiler.getCompleteImage();
+				short[][] tmp = (short[][] ) tiler.getCompleteImage();
 				System.out.println("tmp is " + tmp);
-				float[][] imgData = tmp[0][0];
+				short imgData = tmp[0][0];
 				System.out.println("imgData is " + imgData );
+				count ++;
+				System.out.println("Done with the file " + afile.getName() + " ... " + count);
+				fitsFile.close();
 				
 				/*
 				f = new Fits(afile);
