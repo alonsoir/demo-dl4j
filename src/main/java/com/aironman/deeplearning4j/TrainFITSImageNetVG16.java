@@ -35,6 +35,12 @@ import nom.tam.fits.ImageHDU;
 import nom.tam.image.ImageTiler;
 import nom.tam.image.StandardImageTiler;
 
+/***
+ * This class want to use the NASA library to manipulate FIT files. To future research.
+ * 
+ * @author aironman
+ *
+ */
 public class TrainFITSImageNetVG16 {
 
 	private static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(TrainFITSImageNetVG16.class);
@@ -65,12 +71,13 @@ public class TrainFITSImageNetVG16 {
 	public static void main(String[] args) throws IOException {
 
 		ZooModel zooModel = new VGG16();
-		LOGGER.debug("Start Downloading VGG16 model...");
+		System.out.println("Start Downloading VGG16 model...");
 		ComputationGraph preTrainedNet = (ComputationGraph) zooModel.initPretrained(PretrainedType.IMAGENET);
-		LOGGER.debug(preTrainedNet.summary());
+		System.out.println();
+		System.out.println(preTrainedNet.summary());
 
 		readFitFiles();
-		
+
 		FineTuneConfiguration fineTuneConf = new FineTuneConfiguration.Builder().learningRate(5e-5)
 				.optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT).updater(Updater.NESTEROVS)
 				.seed(seed).build();
@@ -85,19 +92,24 @@ public class TrainFITSImageNetVG16 {
 						FREEZE_UNTIL_LAYER)
 				.build();
 		vgg16Transfer.setListeners(new ScoreIterationListener(5));
-		LOGGER.info(vgg16Transfer.summary());
-		LOGGER.info("DONE!");
+		System.out.println(vgg16Transfer.summary());
+		System.out.println("DONE main!");
 	}
 
 	private static void readFitFiles() {
 
+		int count = 1;
 		try {
+			/*
+			List<File> filesdebuglder = null;
+			*/
 			List<File> filesdebuglder = Files.walk(Paths.get(LOCAL_EXPANDED_DATA_PATH)).filter(Files::isRegularFile)
 					// .filter(line -> line.getName(0).toString().contains(".FIT"))
 					.map(Path::toFile).collect(Collectors.toList());
+			
 			System.out.println(
 					"There are " + filesdebuglder.size() + " .FIT files in folder " + LOCAL_EXPANDED_DATA_PATH);
-			int count = 1;
+			
 			for (File afile : filesdebuglder) {
 				System.out.println("Doing something cool with file " + afile.getName() + " ...");
 				Fits fitsFile = new Fits(afile);
@@ -115,32 +127,6 @@ public class TrainFITSImageNetVG16 {
 				count++;
 				System.out.println("Done with the file " + afile.getName() + " ... " + count);
 				fitsFile.close();
-
-				/*
-				 * f = new Fits(afile); ImageHDU hdu = (ImageHDU) f.getHDU(0); int[][] image =
-				 * (int[][]) hdu.getKernel(); System.out.println(image.length); ImageData
-				 * imageData = (ImageData) hdu.getData(); int[][] _imageData = (int[][])
-				 * imageData.getData(); System.out.println(); ImageTiler anotherTiler =
-				 * hdu.getTiler(); int[] corners = new int[] { 950, 950 }; int[] lengths = new
-				 * int[] { 100, 100 }; // short[] center = (short[]) tiler.getTile({950, 950},
-				 * {100, 100}); short[] center = (short[]) anotherTiler.getTile(corners,
-				 * lengths); System.out.println();
-				 */
-
-				/*
-				 * Reading only parts of an Image
-				 * 
-				 * When reading image data users may not want to read an entire array especially
-				 * if the data is very large. An ImageTiler can be used to read in only a
-				 * portion of an array. The user can specify a box (or a sequence of boxes)
-				 * within the image and extract the desired subsets. ImageTilers can be used for
-				 * any image. The library will try to only read the subsets requested if the
-				 * FITS data is being read from an uncompressed file but in many cases it will
-				 * need to read in the entire image before subsetting.
-				 * 
-				 * Suppose the image we retrieve above has 2000x2000 pixels, but we only want to
-				 * see the innermost 100x100 pixels. This can be achieved with
-				 **/
 			}
 
 		} catch (FitsException e) {
@@ -152,7 +138,7 @@ public class TrainFITSImageNetVG16 {
 		} catch (ClassCastException e) {
 			e.printStackTrace();
 		}
-		System.out.println("DONE!");
+		System.out.println("DONE readFitFiles!");
 	}
 
 	private static void useUnzippedLocalFile() {

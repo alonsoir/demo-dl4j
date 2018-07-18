@@ -6,7 +6,7 @@ import java.net.URL;
 import java.util.Random;
 import java.util.zip.Adler32;
 
-import org.apache.ant.compress.taskdefs.Unzip;
+// import org.apache.ant.compress.taskdefs.Unzip;
 import org.apache.commons.io.FileUtils;
 import org.datavec.api.io.filters.BalancedPathFilter;
 import org.datavec.api.io.labels.ParentPathLabelGenerator;
@@ -36,7 +36,11 @@ import org.nd4j.linalg.dataset.api.preprocessor.VGG16ImagePreProcessor;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 import org.slf4j.Logger;
 
-
+/***
+ * Original class
+ * @author aironman
+ *
+ */
 public class TrainImageNetVG16 {
 
 	private static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(TrainImageNetVG16.class);
@@ -121,7 +125,7 @@ public class TrainImageNetVG16 {
             evalOn(vgg16Transfer, testIterator, iEpoch);
         }
 	}
-    
+    /*
     public static void unzip(File fileZip) throws IOException {
 
         Unzip unzipper = new Unzip();
@@ -129,7 +133,7 @@ public class TrainImageNetVG16 {
         unzipper.setDest(new File(DATA_PATH));
         unzipper.execute();
     }
-    
+    */
     private static void downloadAndUnzipDataForTheFirstTime() throws IOException {
     	File data = new File(DATA_PATH + "/data.zip");
     	
@@ -140,7 +144,7 @@ public class TrainImageNetVG16 {
         }
         if (!new File(TRAIN_FOLDER).exists()) {
             LOGGER.info("Unzipping Data...");
-            unzip(data);
+           // unzip(data);
         }
     }
     
