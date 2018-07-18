@@ -9,13 +9,8 @@
 	<name>demo-dl4j</name>
 
 	<dependencies>
-	<!-- 
-		<dependency>
-			<groupId>org.apache.ant</groupId>
-			<artifactId>ant-compress</artifactId>
-			<version>${ant-compress.version}</version>
-		</dependency>
-		 -->
+		<!-- <dependency> <groupId>org.apache.ant</groupId> <artifactId>ant-compress</artifactId> 
+			<version>${ant-compress.version}</version> </dependency> -->
 		<dependency>
 			<groupId>gov.nasa.gsfc.heasarc</groupId>
 			<artifactId>nom-tam-fits</artifactId>
@@ -43,6 +38,8 @@
 		<dl4j.version>0.9.1</dl4j.version>
 		<ant-compress.version>1.5</ant-compress.version>
 		<nom-tam-fits.version>1.15.2</nom-tam-fits.version>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
 	</properties>
 
 </project>
