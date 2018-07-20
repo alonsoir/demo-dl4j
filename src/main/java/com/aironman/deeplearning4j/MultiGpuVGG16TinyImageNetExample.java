@@ -69,7 +69,8 @@ public class MultiGpuVGG16TinyImageNetExample {
         vgg16.setListeners(new PerformanceListener(1, true));
 
         log.info("Load data....");
-        String dataPath = "/home/justin/Datasets/tiny-imagenet-200/train/";
+        // training data path
+        String dataPath = "/Users/aironman/demo-dl4j/resources/jpg_files/";
         ParentPathLabelGenerator labelMaker = new ParentPathLabelGenerator();
         FileSplit fileSplit = new FileSplit(new File(dataPath), NativeImageLoader.ALLOWED_FORMATS, rng);
         RandomPathFilter randomFilter = new RandomPathFilter(rng, NativeImageLoader.ALLOWED_FORMATS);
@@ -119,14 +120,15 @@ public class MultiGpuVGG16TinyImageNetExample {
         scaler.fit(trainIter);
         trainIter.setPreProcessor(scaler);
         testIter.setPreProcessor(scaler);
-
+        int numDevices = Nd4j.getAffinityManager().getNumberOfDevices();
+        log.info("numDevices: " + numDevices);
         // ParallelWrapper will take care of load balancing between GPUs.
         ParallelWrapper wrapper = new ParallelWrapper.Builder(vgg16)
             // DataSets prefetching options. Set this value with respect to number of actual devices
             .prefetchBuffer(24)
 
             // set number of workers equal to number of available devices
-            .workers(Nd4j.getAffinityManager().getNumberOfDevices())
+            .workers(numDevices)
 
             // use gradient sharing, a more effective distributed training method
             .trainingMode(ParallelWrapper.TrainingMode.SHARED_GRADIENTS)
