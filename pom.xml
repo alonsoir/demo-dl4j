@@ -37,7 +37,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<dl4j.version>0.9.1</dl4j.version>
 		<ant-compress.version>1.5</ant-compress.version>
-		<nom-tam-fits.version>1.15.2</nom-tam-fits.version>
+		<nom-tam-fits.version>1.16.0</nom-tam-fits.version>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
 	</properties>
